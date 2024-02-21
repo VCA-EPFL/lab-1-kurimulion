@@ -1,7 +1,7 @@
 import Vector::*;
 import BRAM::*;
 
-// Time spent on VectorDot: ____
+// Time spent on VectorDot: roughly 2 hrs
 
 // Please annotate the bugs you find.
 
@@ -35,14 +35,14 @@ module mkVectorDot (VD);
 
     Reg#(Bit#(2)) i <- mkReg(0);
 
-
     rule process_a (ready_start && !done_a && !req_a_ready);
         a.portA.request.put(BRAMRequest{write: False, // False for read
                             responseOnWrite: False,
                             address: zeroExtend(pos_a),
                             datain: ?});
 
-        if (pos_a < dim*zeroExtend(i))
+        // the bound should be dim * (i + 1) - 1
+        if (pos_a < dim*zeroExtend(i + 1) - 1)
             pos_a <= pos_a + 1;
         else done_a <= True;
 
@@ -56,7 +56,8 @@ module mkVectorDot (VD);
                 address: zeroExtend(pos_b),
                 datain: ?});
 
-        if (pos_b < dim*zeroExtend(i))
+        // the bound should be dim * (i + 1) - 1
+        if (pos_b < dim*zeroExtend(i + 1) - 1)
             pos_b <= pos_b + 1;
         else done_b <= True;
     
@@ -67,7 +68,8 @@ module mkVectorDot (VD);
         let out_a <- a.portA.response.get();
         let out_b <- b.portA.response.get();
 
-        output_res <=  out_a*out_b;     
+        // the result should be accumulated
+        output_res <= output_res + out_a*out_b;
         pos_out <= pos_out + 1;
         
         if (pos_out == dim-1) begin
@@ -85,8 +87,10 @@ module mkVectorDot (VD);
         ready_start <= True;
         dim <= dim_in;
         done_all <= False;
-        pos_a <= dim_in*zeroExtend(i);
-        pos_b <= dim_in*zeroExtend(i);
+        // instead of i (which is read as initial value 0)
+        // it should be the index arugment to the method
+        pos_a <= dim_in*zeroExtend(i_in);
+        pos_b <= dim_in*zeroExtend(i_in);
         done_a <= False;
         done_b <= False;
         pos_out <= 0;
@@ -94,6 +98,8 @@ module mkVectorDot (VD);
     endmethod
 
     method ActionValue#(Bit#(32)) response() if (done_all);
+        ready_start <= False;
+        output_res <= 0;
         return output_res;
     endmethod
 

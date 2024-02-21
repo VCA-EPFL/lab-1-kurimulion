@@ -2,12 +2,12 @@
 
 3.  Shifters
 
->>
+>> 16, size: 16 inputs
 
->>
+>> 0 when the shift amount is constant, there's a direct mapping from input to output
 
->>
+>> 4 for multiplxing the 4 constant shift amounts
 
 ---
 
-Time spent on Part 1: _____
+Time spent on Part 1: roughly 1.5 hrs
